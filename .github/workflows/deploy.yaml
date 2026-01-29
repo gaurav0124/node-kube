@@ -1,0 +1,49 @@
+name: Build & Deploy Microservices
+
+on:
+  push:
+    branches:
+      - main
+
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to docker hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{secrets.DOCKER_USERNAME}}
+          password: ${{secrets.DOCKER_PASSWORD}}
+
+      - name: Build and push main service
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/node-kube-main-service:latest ./services/main-service
+          docker push ${{ secrets.DOCKER_USERNAME }}/node-kube-main-service:latest
+
+      - name: Build & push user-service
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/node-kube-user-service:latest ./services/user-service
+          docker push ${{ secrets.DOCKER_USERNAME }}/node-kube-user-service:latest
+
+      - name: Build & push product-service
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/node-kube-product-service:latest ./services/product-service
+          docker push ${{ secrets.DOCKER_USERNAME }}/node-kube-product-service:latest
+
+      - name: Set up kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > ~/.kube/config
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/namespaces/
+          kubectl apply -f k8s/config/
+          kubectl apply -f k8s/main-service/
+          kubectl apply -f k8s/user-service/
+          kubectl apply -f k8s/product-service/
+          kubectl apply -f k8s/ingress/
