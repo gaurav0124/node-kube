@@ -1,0 +1,85 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-gateway
+  namespace: microservices
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: localhost
+      http:
+        paths:
+          # User Service Routes
+          - path: /api/users
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80
+          - path: /api/auth
+            pathType: Prefix
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80
+          # Product Service Routes
+          - path: /api/products
+            pathType: Prefix
+            backend:
+              service:
+                name: product-service
+                port:
+                  number: 80
+          - path: /api/orders
+            pathType: Prefix
+            backend:
+              service:
+                name: product-service
+                port:
+                  number: 80
+          - path: /api/messages
+            pathType: Prefix
+            backend:
+              service:
+                name: product-service
+                port:
+                  number: 80
+          - path: /api/comments
+            pathType: Prefix
+            backend:
+              service:
+                name: product-service
+                port:
+                  number: 80
+          # Main Service Routes (if needed)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: main-service
+                port:
+                  number: 80
+          # Health Checks
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: main-service
+                port:
+                  number: 80
+          - path: /api/user-service/health
+            pathType: Exact
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80
+          - path: /api/product-service/health
+            pathType: Exact
+            backend:
+              service:
+                name: product-service
+                port:
+                  number: 80

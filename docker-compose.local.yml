@@ -1,0 +1,24 @@
+version: '3.8'
+
+# Docker Compose override for local development
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.local.yml up
+
+services:
+  main-service:
+    env_file:
+      - ./services/main-service/.env.local
+    environment:
+      - NODE_ENV=development
+
+  user-service:
+    env_file:
+      - ./services/user-service/.env.local
+    environment:
+      - NODE_ENV=development
+
+  product-service:
+    env_file:
+      - ./services/product-service/.env.local
+    environment:
+      - NODE_ENV=development
+

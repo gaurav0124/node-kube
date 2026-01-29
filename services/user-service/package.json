@@ -1,0 +1,26 @@
+{
+  "name": "user-service",
+  "version": "1.0.0",
+  "description": "User Service Microservice",
+  "main": "server.js",
+  "scripts": {
+    "start": "node -r dotenv/config server.js dotenv_config_path=.env.production",
+    "start:local": "node -r dotenv/config server.js dotenv_config_path=.env.local",
+    "dev": "nodemon -r dotenv/config server.js dotenv_config_path=.env.local",
+    "dev:prod": "nodemon -r dotenv/config server.js dotenv_config_path=.env.production"
+  },
+  "keywords": [
+    "express",
+    "microservice",
+    "user-service"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
