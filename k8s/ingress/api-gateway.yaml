@@ -3,11 +3,14 @@ kind: Ingress
 metadata:
   name: api-gateway
   namespace: microservices
+  annotations:
+    # Allow ingress to work with any host (IP or domain)
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx
   rules:
-    - host: localhost
-      http:
+    # Remove host restriction to work with IP address or any domain
+    - http:
         paths:
           # User Service Routes
           - path: /api/users
