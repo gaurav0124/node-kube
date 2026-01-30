@@ -57,8 +57,10 @@ jobs:
 
     - name: Deploy to GKE
       run: |
-        kubectl apply -f k8s/namespaces/
-        kubectl apply -f k8s/config/
+        kubectl apply -f k8s/namespaces/microservices.yaml
+        kubectl apply -f k8s/config/common-config.yaml
+        kubectl apply -f k8s/config/secrets.yaml
+
         kubectl apply -f k8s/main-service/
         kubectl apply -f k8s/user-service/
         kubectl apply -f k8s/product-service/
