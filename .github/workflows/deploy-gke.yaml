@@ -1,0 +1,65 @@
+name: Build & Deploy to GKE
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up gcloud
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+    - name: Get GKE credentials
+      uses: google-github-actions/get-gke-credentials@v2
+      with:
+        cluster_name: ${{ secrets.GKE_CLUSTER }}
+        location: ${{ secrets.GKE_ZONE }}
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Build & Push main-service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./services/main-service
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/node-kube-main-service:latest
+
+    - name: Build & Push user-service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./services/user-service
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/node-kube-user-service:latest
+
+    - name: Build & Push product-service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./services/product-service
+        push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/node-kube-product-service:latest
+
+    - name: Deploy to GKE
+      run: |
+        kubectl apply -f k8s/namespaces/
+        kubectl apply -f k8s/config/
+        kubectl apply -f k8s/main-service/
+        kubectl apply -f k8s/user-service/
+        kubectl apply -f k8s/product-service/
+        kubectl apply -f k8s/ingress/
