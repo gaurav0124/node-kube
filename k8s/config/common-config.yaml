@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: common-config
+  namespace: microservices
+data:
+  # Common configuration values
+  # Add your common config here
+

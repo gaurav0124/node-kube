@@ -57,10 +57,19 @@ jobs:
 
     - name: Deploy to GKE
       run: |
+        # Apply namespace
         kubectl apply -f k8s/namespaces/microservices.yaml
-        kubectl apply -f k8s/config/common-config.yaml
-        kubectl apply -f k8s/config/secrets.yaml
+        
+        # Apply config files only if they exist and are not empty
+        if [ -s k8s/config/common-config.yaml ]; then
+          kubectl apply -f k8s/config/common-config.yaml
+        fi
+        
+        if [ -s k8s/config/secrets.yaml ]; then
+          kubectl apply -f k8s/config/secrets.yaml
+        fi
 
+        # Apply service deployments
         kubectl apply -f k8s/main-service/
         kubectl apply -f k8s/user-service/
         kubectl apply -f k8s/product-service/
