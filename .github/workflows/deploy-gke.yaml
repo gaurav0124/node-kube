@@ -81,6 +81,13 @@ jobs:
         push: true
         tags: ${{ secrets.DOCKER_USERNAME }}/node-kube-product-service:latest
 
+    - name: Update deployment image paths
+      run: |
+        # Replace placeholder with actual Docker Hub username
+        DOCKER_USER="${{ secrets.DOCKER_USERNAME }}"
+        find k8s -name "deployment.yaml" -type f -exec sed -i.bak "s|gaurav01245|${DOCKER_USER}|g" {} \;
+        find k8s -name "*.bak" -delete
+
     - name: Deploy to GKE
       run: |
         # Apply namespace
@@ -100,3 +107,22 @@ jobs:
         kubectl apply -f k8s/user-service/
         kubectl apply -f k8s/product-service/
         kubectl apply -f k8s/ingress/
+        
+        # Wait for deployments to be ready
+        echo "Waiting for deployments to be ready..."
+        kubectl wait --for=condition=available --timeout=300s deployment/main-service -n microservices || true
+        kubectl wait --for=condition=available --timeout=300s deployment/user-service -n microservices || true
+        kubectl wait --for=condition=available --timeout=300s deployment/product-service -n microservices || true
+        
+        # Show deployment status
+        echo "=== Deployment Status ==="
+        kubectl get deployments -n microservices
+        echo ""
+        echo "=== Pod Status ==="
+        kubectl get pods -n microservices
+        echo ""
+        echo "=== Service Endpoints ==="
+        kubectl get endpoints -n microservices
+        echo ""
+        echo "=== Ingress Status ==="
+        kubectl get ingress -n microservices

@@ -17,8 +17,10 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: node-kube-user-service:latest
-          imagePullPolicy: IfNotPresent
+          # Image will be updated by workflow with DOCKER_USERNAME
+          # Format: DOCKER_USERNAME/node-kube-user-service:latest
+          image: gaurav01245/node-kube-user-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3001
           envFrom:
