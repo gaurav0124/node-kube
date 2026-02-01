@@ -131,12 +131,15 @@ jobs:
             IMAGE_VAR="${service}_IMAGE"
             IMAGE_TAG="${!IMAGE_VAR}"
             echo "Deploying $service with image: $IMAGE_TAG"
+            # Extract repository and tag from IMAGE_TAG (format: registry/image:tag)
+            IMAGE_REPO=$(echo "$IMAGE_TAG" | cut -d: -f1)
+            IMAGE_TAG_ONLY=$(echo "$IMAGE_TAG" | cut -d: -f2)
             helm upgrade --install node-kube-$service ./helm/microservices \
               --namespace ${{ env.env }} \
               --create-namespace \
               --values ./helm/microservices/${{ env.values_file }} \
-              --set image.repository=${{ env.DOCKER_REGISTRY }}/node-kube-$service \
-              --set image.tag=$IMAGE_TAG
+              --set image.$service.repository=$IMAGE_REPO \
+              --set image.$service.tag=$IMAGE_TAG_ONLY
           done
 
       # -------------------------------
