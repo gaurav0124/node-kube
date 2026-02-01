@@ -143,15 +143,35 @@ jobs:
             # Wait for cleanup
             sleep 5
           else
-            echo "First deployment detected - cleaning up conflicting resources"
-            echo "Removing resources that will be recreated by the new unified release..."
+            echo "First deployment detected - removing Helm ownership from conflicting resources"
+            echo "This allows the new unified release to take ownership..."
             
-            # Delete shared resources that will be recreated (these are safe to delete)
-            kubectl delete configmap microservices-config -n ${{ env.env }} --ignore-not-found=true || true
-            kubectl delete ingress api-gateway -n ${{ env.env }} --ignore-not-found=true || true
+            # Remove Helm ownership annotations from shared resources
+            # Using kubectl patch to remove annotations (more reliable than annotate with trailing dash)
+            if kubectl get configmap microservices-config -n ${{ env.env }} &>/dev/null; then
+              echo "Removing Helm annotations from ConfigMap..."
+              kubectl patch configmap microservices-config -n ${{ env.env }} \
+                --type json \
+                -p='[{"op": "remove", "path": "/metadata/annotations/meta.helm.sh~1release-name"}, {"op": "remove", "path": "/metadata/annotations/meta.helm.sh~1release-namespace"}]' 2>/dev/null || \
+              kubectl annotate configmap microservices-config \
+                meta.helm.sh/release-name- \
+                meta.helm.sh/release-namespace- \
+                -n ${{ env.env }} --overwrite 2>/dev/null || true
+            fi
             
-            echo "Conflicting resources removed. Old releases kept for rollback if needed."
-            sleep 3
+            if kubectl get ingress api-gateway -n ${{ env.env }} &>/dev/null; then
+              echo "Removing Helm annotations from Ingress..."
+              kubectl patch ingress api-gateway -n ${{ env.env }} \
+                --type json \
+                -p='[{"op": "remove", "path": "/metadata/annotations/meta.helm.sh~1release-name"}, {"op": "remove", "path": "/metadata/annotations/meta.helm.sh~1release-namespace"}]' 2>/dev/null || \
+              kubectl annotate ingress api-gateway \
+                meta.helm.sh/release-name- \
+                meta.helm.sh/release-namespace- \
+                -n ${{ env.env }} --overwrite 2>/dev/null || true
+            fi
+            
+            echo "Helm ownership annotations removed. Old releases kept for rollback."
+            sleep 2
           fi
           echo "Cleanup check complete"
 
