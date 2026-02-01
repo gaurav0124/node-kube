@@ -86,8 +86,8 @@ jobs:
         uses: google-github-actions/get-gke-credentials@v1
         with:
           cluster_name: ${{ env.cluster }}
-          location: ${{ env.GKE_ZONE }}
-          project_id: ${{ env.GKE_PROJECT }}
+          location: ${{ secrets.GKE_ZONE }}
+          project_id: ${{ secrets.GKE_PROJECT }}
           credentials_json: ${{ secrets.GKE_SA_KEY_DEV }}
 
       # -------------------------------
@@ -98,8 +98,8 @@ jobs:
         uses: google-github-actions/get-gke-credentials@v1
         with:
           cluster_name: ${{ env.cluster }}
-          location: ${{ env.GKE_ZONE }}
-          project_id: ${{ env.GKE_PROJECT }}
+          location: ${{ secrets.GKE_ZONE }}
+          project_id: ${{ secrets.GKE_PROJECT }}
           credentials_json: ${{ secrets.GKE_SA_KEY_STAGING }}
 
       # -------------------------------
@@ -110,8 +110,8 @@ jobs:
         uses: google-github-actions/get-gke-credentials@v1
         with:
           cluster_name: ${{ env.cluster }}
-          location: ${{ env.GKE_ZONE }}
-          project_id: ${{ env.GKE_PROJECT }}
+          location: ${{ secrets.GKE_ZONE }}
+          project_id: ${{ secrets.GKE_PROJECT }}
           credentials_json: ${{ secrets.GKE_SA_KEY_PROD }}
 
       # -------------------------------
