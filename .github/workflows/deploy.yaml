@@ -122,7 +122,30 @@ jobs:
         uses: azure/setup-helm@v3
 
       # -------------------------------
-      # 9. Helm upgrade/install
+      # 9. Cleanup old Helm releases (if they exist)
+      # -------------------------------
+      - name: Cleanup old Helm releases
+        run: |
+          echo "Checking for old Helm releases..."
+          # List all releases in the namespace
+          helm list -n ${{ env.env }} || echo "No existing releases found"
+          
+          # Uninstall old individual service releases if they exist
+          for old_release in node-kube-main node-kube-user node-kube-product; do
+            if helm list -n ${{ env.env }} | grep -q "$old_release"; then
+              echo "Uninstalling old release: $old_release"
+              helm uninstall $old_release -n ${{ env.env }} || echo "Failed to uninstall $old_release (may not exist)"
+            else
+              echo "Release $old_release does not exist, skipping..."
+            fi
+          done
+          
+          # Wait a moment for resources to be cleaned up
+          sleep 5
+          echo "Cleanup complete"
+
+      # -------------------------------
+      # 10. Helm upgrade/install
       # -------------------------------
       - name: Helm Upgrade/Install
         run: |
@@ -155,7 +178,7 @@ jobs:
             $SET_ARGS
 
       # -------------------------------
-      # 10. Verify rollout
+      # 11. Verify rollout
       # -------------------------------
       - name: Verify rollout
         run: |
