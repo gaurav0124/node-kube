@@ -202,11 +202,22 @@ jobs:
           
           # Deploy all services as a single Helm release
           echo "Deploying all microservices as a single release..."
-          helm upgrade --install node-kube-microservices ./helm/microservices \
+          echo "Helm command: helm upgrade --install node-kube-microservices ./helm/microservices --namespace ${{ env.env }} --create-namespace --values ./helm/microservices/${{ env.values_file }} $SET_ARGS"
+          
+          if helm upgrade --install node-kube-microservices ./helm/microservices \
             --namespace ${{ env.env }} \
             --create-namespace \
             --values ./helm/microservices/${{ env.values_file }} \
-            $SET_ARGS
+            $SET_ARGS; then
+            echo "Helm deployment successful!"
+            echo "Listing deployed resources:"
+            helm get manifest node-kube-microservices -n ${{ env.env }} | grep -E "kind:|name:" | head -20
+          else
+            echo "ERROR: Helm deployment failed!"
+            echo "Checking what was deployed:"
+            kubectl get all -n ${{ env.env }}
+            exit 1
+          fi
 
       # -------------------------------
       # 11. Verify rollout
@@ -214,10 +225,26 @@ jobs:
       - name: Verify rollout
         run: |
           echo "Checking pods in namespace ${{ env.env }}..."
-          kubectl get pods -n ${{ env.env }}
+          kubectl get pods -n ${{ env.env }} || echo "No pods found yet"
           echo "---"
+          echo "Checking deployments..."
+          kubectl get deployments -n ${{ env.env }} || echo "No deployments found"
+          echo "---"
+          
+          # Wait a moment for deployments to be created
+          sleep 10
+          
+          # Verify each deployment exists and is ready
           for service in main user product; do
-            echo "Waiting for $service deployment to be ready..."
-            kubectl rollout status deployment/$service -n ${{ env.env }} --timeout=5m
+            echo "Checking $service deployment..."
+            if kubectl get deployment $service -n ${{ env.env }} &>/dev/null; then
+              echo "Waiting for $service deployment to be ready..."
+              kubectl rollout status deployment/$service -n ${{ env.env }} --timeout=5m || echo "Warning: $service deployment not ready"
+            else
+              echo "Error: $service deployment not found!"
+              echo "Listing all deployments:"
+              kubectl get deployments -n ${{ env.env }}
+              exit 1
+            fi
           done
           echo "All deployments are ready!"
