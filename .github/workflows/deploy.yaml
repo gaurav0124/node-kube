@@ -126,6 +126,13 @@ jobs:
       # -------------------------------
       - name: Helm Upgrade/Install
         run: |
+          # Verify chart directory and Chart.yaml exist
+          echo "Current directory: $(pwd)"
+          echo "Checking helm chart directory..."
+          ls -la ./helm/microservices/ || echo "Directory not found"
+          ls -la ./helm/microservices/Chart.yaml || echo "Chart.yaml not found"
+          echo "---"
+          
           for service in main user product; do
             # Get the image tag from environment variable
             IMAGE_VAR="${service}_IMAGE"

@@ -312,10 +312,10 @@ For the best development experience with Helm templates:
 ./scripts/lint-helm.sh
 
 # Lint a specific chart
-helm lint helm/node-kube
+helm lint helm/microservices
 
 # Test template rendering
-helm template test helm/node-kube --debug
+helm template test helm/microservices --debug
 ```
 
 ## Notes
