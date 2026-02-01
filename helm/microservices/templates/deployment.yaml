@@ -1,0 +1,27 @@
+{{- $namespace := .Values.namespace }}
+{{- range $service, $img := .Values.image }}
+{{- if and $img.repository $img.tag }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $service }}
+  namespace: {{ $namespace }}
+spec:
+  replicas: {{ index $.Values.replicas $service | default 1 }}
+  selector:
+    matchLabels:
+      app: {{ $service }}
+  template:
+    metadata:
+      labels:
+        app: {{ $service }}
+    spec:
+      containers:
+        - name: {{ $service }}
+          image: {{ $img.repository }}:{{ $img.tag }}
+          imagePullPolicy: {{ $img.pullPolicy | default "IfNotPresent" }}
+          ports:
+            - containerPort: {{ if eq $service "main" }}3000{{ else if eq $service "user" }}3001{{ else if eq $service "product" }}3002{{ end }}
+---
+{{- end }}
+{{- end }}

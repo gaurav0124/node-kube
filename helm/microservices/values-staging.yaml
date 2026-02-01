@@ -2,11 +2,17 @@ namespace: staging
 
 image:
   main:
+    repository: gaurav01245/node-kube-main-service
     tag: staging
+    pullPolicy: IfNotPresent
   user:
+    repository: gaurav01245/node-kube-user-service
     tag: staging
+    pullPolicy: IfNotPresent
   product:
+    repository: gaurav01245/node-kube-product-service
     tag: staging
+    pullPolicy: IfNotPresent
 
 replicas:
   main: 2

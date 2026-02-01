@@ -2,8 +2,19 @@ namespace: dev
 
 image:
   main:
+    repository: gaurav01245/node-kube-main-service
     tag: dev
+    pullPolicy: IfNotPresent
   user:
+    repository: gaurav01245/node-kube-user-service
     tag: dev
+    pullPolicy: IfNotPresent
   product:
+    repository: gaurav01245/node-kube-product-service
     tag: dev
+    pullPolicy: IfNotPresent
+
+replicas:
+  main: 2
+  user: 2
+  product: 2

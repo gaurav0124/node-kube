@@ -2,11 +2,17 @@ namespace: prod
 
 image:
   main:
+    repository: gaurav01245/node-kube-main-service
     tag: prod
+    pullPolicy: IfNotPresent
   user:
+    repository: gaurav01245/node-kube-user-service
     tag: prod
+    pullPolicy: IfNotPresent
   product:
+    repository: gaurav01245/node-kube-product-service
     tag: prod
+    pullPolicy: IfNotPresent
 
 replicas:
   main: 3
