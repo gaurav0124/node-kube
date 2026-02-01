@@ -79,49 +79,50 @@ jobs:
           done
 
       # -------------------------------
-      # 6. Setup GKE credentials (Dev)
+      # 6. Authenticate to Google Cloud (Dev)
       # -------------------------------
-      - name: Get GKE credentials (Dev)
+      - name: Authenticate to Google Cloud (Dev)
         if: env.env == 'dev'
-        uses: google-github-actions/get-gke-credentials@v1
+        uses: google-github-actions/auth@v1
         with:
-          cluster_name: ${{ env.cluster }}
-          location: ${{ secrets.GKE_ZONE }}
-          project_id: ${{ secrets.GKE_PROJECT }}
           credentials_json: ${{ secrets.GKE_SA_KEY_DEV }}
 
       # -------------------------------
-      # 6. Setup GKE credentials (Staging)
+      # 6. Authenticate to Google Cloud (Staging)
       # -------------------------------
-      - name: Get GKE credentials (Staging)
+      - name: Authenticate to Google Cloud (Staging)
         if: env.env == 'staging'
-        uses: google-github-actions/get-gke-credentials@v1
+        uses: google-github-actions/auth@v1
         with:
-          cluster_name: ${{ env.cluster }}
-          location: ${{ secrets.GKE_ZONE }}
-          project_id: ${{ secrets.GKE_PROJECT }}
           credentials_json: ${{ secrets.GKE_SA_KEY_STAGING }}
 
       # -------------------------------
-      # 6. Setup GKE credentials (Prod)
+      # 6. Authenticate to Google Cloud (Prod)
       # -------------------------------
-      - name: Get GKE credentials (Prod)
+      - name: Authenticate to Google Cloud (Prod)
         if: env.env == 'prod'
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GKE_SA_KEY_PROD }}
+
+      # -------------------------------
+      # 7. Setup GKE credentials
+      # -------------------------------
+      - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v1
         with:
           cluster_name: ${{ env.cluster }}
           location: ${{ secrets.GKE_ZONE }}
           project_id: ${{ secrets.GKE_PROJECT }}
-          credentials_json: ${{ secrets.GKE_SA_KEY_PROD }}
 
       # -------------------------------
-      # 7. Setup Helm
+      # 8. Setup Helm
       # -------------------------------
       - name: Setup Helm
         uses: azure/setup-helm@v3
 
       # -------------------------------
-      # 8. Helm upgrade/install
+      # 9. Helm upgrade/install
       # -------------------------------
       - name: Helm Upgrade/Install
         run: |
@@ -139,7 +140,7 @@ jobs:
           done
 
       # -------------------------------
-      # 9. Verify rollout
+      # 10. Verify rollout
       # -------------------------------
       - name: Verify rollout
         run: |
