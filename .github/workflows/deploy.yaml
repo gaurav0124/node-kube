@@ -133,28 +133,37 @@ jobs:
           ls -la ./helm/microservices/Chart.yaml || echo "Chart.yaml not found"
           echo "---"
           
+          # Build helm set arguments for all services
+          SET_ARGS=""
           for service in main user product; do
             # Get the image tag from environment variable
             IMAGE_VAR="${service}_IMAGE"
             IMAGE_TAG="${!IMAGE_VAR}"
-            echo "Deploying $service with image: $IMAGE_TAG"
+            echo "Preparing $service with image: $IMAGE_TAG"
             # Extract repository and tag from IMAGE_TAG (format: registry/image:tag)
             IMAGE_REPO=$(echo "$IMAGE_TAG" | cut -d: -f1)
             IMAGE_TAG_ONLY=$(echo "$IMAGE_TAG" | cut -d: -f2)
-            helm upgrade --install node-kube-$service ./helm/microservices \
-              --namespace ${{ env.env }} \
-              --create-namespace \
-              --values ./helm/microservices/${{ env.values_file }} \
-              --set image.$service.repository=$IMAGE_REPO \
-              --set image.$service.tag=$IMAGE_TAG_ONLY
+            SET_ARGS="$SET_ARGS --set image.$service.repository=$IMAGE_REPO --set image.$service.tag=$IMAGE_TAG_ONLY"
           done
+          
+          # Deploy all services as a single Helm release
+          echo "Deploying all microservices as a single release..."
+          helm upgrade --install node-kube-microservices ./helm/microservices \
+            --namespace ${{ env.env }} \
+            --create-namespace \
+            --values ./helm/microservices/${{ env.values_file }} \
+            $SET_ARGS
 
       # -------------------------------
       # 10. Verify rollout
       # -------------------------------
       - name: Verify rollout
         run: |
+          echo "Checking pods in namespace ${{ env.env }}..."
           kubectl get pods -n ${{ env.env }}
+          echo "---"
           for service in main user product; do
-            kubectl rollout status deployment/$service -n ${{ env.env }}
+            echo "Waiting for $service deployment to be ready..."
+            kubectl rollout status deployment/$service -n ${{ env.env }} --timeout=5m
           done
+          echo "All deployments are ready!"
