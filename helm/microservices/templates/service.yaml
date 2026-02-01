@@ -1,0 +1,17 @@
+{{- $namespace := .Values.namespace }}
+{{- range $service, $img := .Values.image }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $service }}
+  namespace: {{ $namespace }}
+spec:
+  selector:
+    app: {{ $service }}
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: {{ if eq $service "main" }}3000{{ else if eq $service "user" }}3001{{ else if eq $service "product" }}3002{{ end }}
+  type: ClusterIP
+---
+{{- end }}

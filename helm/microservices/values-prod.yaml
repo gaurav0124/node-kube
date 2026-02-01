@@ -1,0 +1,14 @@
+namespace: prod
+
+image:
+  main:
+    tag: prod
+  user:
+    tag: prod
+  product:
+    tag: prod
+
+replicas:
+  main: 3
+  user: 3
+  product: 3

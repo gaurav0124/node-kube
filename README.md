@@ -273,6 +273,51 @@ All services include health check endpoints:
 - Product Service: `http://localhost:3002/health`
 - Gateway: `http://localhost/health`
 
+## Linting and Code Quality
+
+### Helm Charts
+
+The project includes linting configuration for Helm templates:
+
+1. **VS Code Settings** (`.vscode/settings.json`):
+   - Configures YAML language server to recognize Helm template syntax
+   - Associates Helm template files with proper language mode
+   - Disables validation for Helm templates (they contain Go template syntax)
+
+2. **YAML Lint** (`.yamllint.yml`):
+   - Configured to ignore Helm template directories
+   - Validates standard Kubernetes YAML files
+
+3. **Helm Linting Script**:
+   ```bash
+   ./scripts/lint-helm.sh
+   ```
+   This script:
+   - Runs `helm lint` on all charts
+   - Tests template rendering with `helm template`
+   - Reports any syntax or validation errors
+
+### Recommended VS Code Extensions
+
+For the best development experience with Helm templates:
+
+- **YAML** (Red Hat) - Provides YAML language support
+- **Helm Intellisense** - Adds Helm-specific autocomplete and validation
+- **Kubernetes** - Kubernetes resource management
+
+### Linting Commands
+
+```bash
+# Lint Helm charts
+./scripts/lint-helm.sh
+
+# Lint a specific chart
+helm lint helm/node-kube
+
+# Test template rendering
+helm template test helm/node-kube --debug
+```
+
 ## Notes
 
 - Services use in-memory data stores for demonstration purposes

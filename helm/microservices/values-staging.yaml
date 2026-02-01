@@ -1,0 +1,14 @@
+namespace: staging
+
+image:
+  main:
+    tag: staging
+  user:
+    tag: staging
+  product:
+    tag: staging
+
+replicas:
+  main: 2
+  user: 2
+  product: 2

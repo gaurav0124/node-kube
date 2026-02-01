@@ -1,0 +1,41 @@
+namespace: dev
+
+image:
+  main:
+    repository: gaurav01245/node-kube-main-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  user:
+    repository: gaurav01245/node-kube-user-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  product:
+    repository: gaurav01245/node-kube-product-service
+    tag: latest
+    pullPolicy: IfNotPresent
+
+replicas:
+  main: 2
+  user: 2
+  product: 2
+
+ingress:
+  enabled: true
+  className: nginx
+  paths:
+    - path: /api/users
+      pathType: Prefix
+      service: user
+      port: 80
+    - path: /api/auth
+      pathType: Prefix
+      service: user
+      port: 80
+    - path: /api/products
+      pathType: Prefix
+      service: product
+      port: 80
+    - path: /
+      pathType: Prefix
+      service: main
+      port: 80

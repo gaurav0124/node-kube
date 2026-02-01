@@ -1,0 +1,49 @@
+{
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/instrumenta/kubernetes-json-schema/master/v1.18.0/all.json": [
+      "k8s/**/*.yaml",
+      "k8s/**/*.yml"
+    ],
+    "https://raw.githubusercontent.com/helm/helm/main/pkg/chartutil/schema.json": [
+      "helm/**/Chart.yaml"
+    ]
+  },
+  "yaml.customTags": [
+    "!And scalar",
+    "!If scalar",
+    "!Not scalar",
+    "!Equals scalar",
+    "!Or scalar",
+    "!FindInMap sequence",
+    "!Base64 scalar",
+    "!Cidr scalar",
+    "!Ref scalar",
+    "!Sub scalar",
+    "!GetAtt scalar",
+    "!GetAZs scalar",
+    "!ImportValue scalar",
+    "!Select sequence",
+    "!Split sequence",
+    "!Join sequence"
+  ],
+  "[yaml]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml",
+    "editor.formatOnSave": false
+  },
+  "files.associations": {
+    "**/helm/**/*.yaml": "helm",
+    "**/helm/**/*.yml": "helm",
+    "**/templates/**/*.yaml": "helm",
+    "**/templates/**/*.yml": "helm"
+  },
+  "yaml.validate": true,
+  "yaml.completion": true,
+  "yaml.hover": true,
+  // Disable YAML validation for Helm templates (they contain Go template syntax)
+  "yaml.schemaStore.enable": true,
+  "[helm]": {
+    "editor.formatOnSave": false,
+    "editor.wordBasedSuggestions": "off"
+  }
+}
+

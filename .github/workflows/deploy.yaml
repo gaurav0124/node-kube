@@ -1,0 +1,122 @@
+name: CI/CD Microservices Helm
+
+# Trigger workflow **only on tags**: dev*, staging*, prod*
+on:
+  push:
+    tags:
+      - 'dev*'
+      - 'staging*'
+      - 'prod*'
+
+env:
+  DOCKER_REGISTRY: ${{ secrets.DOCKER_USERNAME }}
+  GKE_PROJECT: ${{ secrets.GKE_PROJECT }}
+  GKE_ZONE: ${{ secrets.GKE_ZONE }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # -------------------------------
+      # 1. Checkout the repo
+      # -------------------------------
+      - uses: actions/checkout@v4
+
+      # -------------------------------
+      # 2. Determine environment from Git tag
+      # -------------------------------
+      - name: Set deployment environment
+        id: set-env
+        run: |
+          TAG_NAME=${GITHUB_REF##*/}   # Extract tag without refs/tags/
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+
+          if [[ "$TAG_NAME" == dev* ]]; then
+            echo "env=dev" >> $GITHUB_ENV
+            echo "values_file=values-dev.yaml" >> $GITHUB_ENV
+            echo "sa_key=${{ secrets.GKE_SA_KEY_DEV }}" >> $GITHUB_ENV
+            echo "cluster=dev-cluster" >> $GITHUB_ENV
+          elif [[ "$TAG_NAME" == staging* ]]; then
+            echo "env=staging" >> $GITHUB_ENV
+            echo "values_file=values-staging.yaml" >> $GITHUB_ENV
+            echo "sa_key=${{ secrets.GKE_SA_KEY_STAGING }}" >> $GITHUB_ENV
+            echo "cluster=staging-cluster" >> $GITHUB_ENV
+          elif [[ "$TAG_NAME" == prod* ]]; then
+            echo "env=prod" >> $GITHUB_ENV
+            echo "values_file=values-prod.yaml" >> $GITHUB_ENV
+            echo "sa_key=${{ secrets.GKE_SA_KEY_PROD }}" >> $GITHUB_ENV
+            echo "cluster=prod-cluster" >> $GITHUB_ENV
+          else
+            echo "Error: Invalid tag format" 
+            exit 1
+          fi
+
+      # -------------------------------
+      # 3. Setup Docker Buildx
+      # -------------------------------
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # -------------------------------
+      # 4. Docker login
+      # -------------------------------
+      - name: Docker login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # -------------------------------
+      # 5. Build and push Docker images
+      # -------------------------------
+      - name: Build & push Docker images
+        run: |
+          for service in main user product; do
+            IMAGE_TAG=${DOCKER_REGISTRY}/node-kube-$service:${TAG_NAME}
+            echo "Building $service -> $IMAGE_TAG"
+            docker build -t $IMAGE_TAG ./services/$service
+            docker push $IMAGE_TAG
+            echo "$service=$IMAGE_TAG" >> $GITHUB_ENV
+          done
+
+      # -------------------------------
+      # 6. Setup GKE credentials
+      # -------------------------------
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{ env.cluster }}
+          location: ${{ env.GKE_ZONE }}
+          project_id: ${{ env.GKE_PROJECT }}
+          credentials_json: ${{ env.sa_key }}
+
+      # -------------------------------
+      # 7. Setup Helm
+      # -------------------------------
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+
+      # -------------------------------
+      # 8. Helm upgrade/install
+      # -------------------------------
+      - name: Helm Upgrade/Install
+        run: |
+          for service in main user product; do
+            helm upgrade --install node-kube-$service ./helm/microservices \
+              --namespace ${{ env.env }} \
+              --create-namespace \
+              --values ./helm/microservices/${{ env.values_file }} \
+              --set image.repository=${{ env.DOCKER_REGISTRY }}/node-kube-$service \
+              --set image.tag=${{ env[service] }}
+          done
+
+      # -------------------------------
+      # 9. Verify rollout
+      # -------------------------------
+      - name: Verify rollout
+        run: |
+          kubectl get pods -n ${{ env.env }}
+          for service in main user product; do
+            kubectl rollout status deployment/$service -n ${{ env.env }}
+          done

@@ -1,0 +1,9 @@
+namespace: dev
+
+image:
+  main:
+    tag: dev
+  user:
+    tag: dev
+  product:
+    tag: dev
