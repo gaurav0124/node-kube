@@ -35,17 +35,14 @@ jobs:
           if [[ "$TAG_NAME" == dev* ]]; then
             echo "env=dev" >> $GITHUB_ENV
             echo "values_file=values-dev.yaml" >> $GITHUB_ENV
-            echo "sa_key=${{ secrets.GKE_SA_KEY_DEV }}" >> $GITHUB_ENV
             echo "cluster=dev-cluster" >> $GITHUB_ENV
           elif [[ "$TAG_NAME" == staging* ]]; then
             echo "env=staging" >> $GITHUB_ENV
             echo "values_file=values-staging.yaml" >> $GITHUB_ENV
-            echo "sa_key=${{ secrets.GKE_SA_KEY_STAGING }}" >> $GITHUB_ENV
             echo "cluster=staging-cluster" >> $GITHUB_ENV
           elif [[ "$TAG_NAME" == prod* ]]; then
             echo "env=prod" >> $GITHUB_ENV
             echo "values_file=values-prod.yaml" >> $GITHUB_ENV
-            echo "sa_key=${{ secrets.GKE_SA_KEY_PROD }}" >> $GITHUB_ENV
             echo "cluster=prod-cluster" >> $GITHUB_ENV
           else
             echo "Error: Invalid tag format" 
@@ -82,15 +79,40 @@ jobs:
           done
 
       # -------------------------------
-      # 6. Setup GKE credentials
+      # 6. Setup GKE credentials (Dev)
       # -------------------------------
-      - name: Get GKE credentials
+      - name: Get GKE credentials (Dev)
+        if: env.env == 'dev'
         uses: google-github-actions/get-gke-credentials@v1
         with:
           cluster_name: ${{ env.cluster }}
           location: ${{ env.GKE_ZONE }}
           project_id: ${{ env.GKE_PROJECT }}
-          credentials_json: ${{ env.sa_key }}
+          credentials_json: ${{ secrets.GKE_SA_KEY_DEV }}
+
+      # -------------------------------
+      # 6. Setup GKE credentials (Staging)
+      # -------------------------------
+      - name: Get GKE credentials (Staging)
+        if: env.env == 'staging'
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{ env.cluster }}
+          location: ${{ env.GKE_ZONE }}
+          project_id: ${{ env.GKE_PROJECT }}
+          credentials_json: ${{ secrets.GKE_SA_KEY_STAGING }}
+
+      # -------------------------------
+      # 6. Setup GKE credentials (Prod)
+      # -------------------------------
+      - name: Get GKE credentials (Prod)
+        if: env.env == 'prod'
+        uses: google-github-actions/get-gke-credentials@v1
+        with:
+          cluster_name: ${{ env.cluster }}
+          location: ${{ env.GKE_ZONE }}
+          project_id: ${{ env.GKE_PROJECT }}
+          credentials_json: ${{ secrets.GKE_SA_KEY_PROD }}
 
       # -------------------------------
       # 7. Setup Helm
