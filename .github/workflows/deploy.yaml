@@ -122,7 +122,7 @@ jobs:
         uses: azure/setup-helm@v3
 
       # -------------------------------
-      # 9. Cleanup old Helm releases (only if new release exists)
+      # 9. Cleanup old Helm releases and conflicting resources
       # -------------------------------
       - name: Cleanup old Helm releases
         run: |
@@ -143,8 +143,15 @@ jobs:
             # Wait for cleanup
             sleep 5
           else
-            echo "Unified release does not exist yet - keeping old releases for potential rollback"
-            echo "Will use --force flag to handle resource ownership during first migration"
+            echo "First deployment detected - cleaning up conflicting resources"
+            echo "Removing resources that will be recreated by the new unified release..."
+            
+            # Delete shared resources that will be recreated (these are safe to delete)
+            kubectl delete configmap microservices-config -n ${{ env.env }} --ignore-not-found=true || true
+            kubectl delete ingress api-gateway -n ${{ env.env }} --ignore-not-found=true || true
+            
+            echo "Conflicting resources removed. Old releases kept for rollback if needed."
+            sleep 3
           fi
           echo "Cleanup check complete"
 
@@ -173,27 +180,13 @@ jobs:
             SET_ARGS="$SET_ARGS --set image.$service.repository=$IMAGE_REPO --set image.$service.tag=$IMAGE_TAG_ONLY"
           done
           
-          # Check if this is the first deployment (migration from old releases)
-          IS_FIRST_DEPLOY=$(helm list -n ${{ env.env }} | grep -q "node-kube-microservices" && echo "false" || echo "true")
-          
           # Deploy all services as a single Helm release
           echo "Deploying all microservices as a single release..."
-          if [ "$IS_FIRST_DEPLOY" = "true" ]; then
-            echo "First deployment detected - using --force to handle resource ownership"
-            helm upgrade --install node-kube-microservices ./helm/microservices \
-              --namespace ${{ env.env }} \
-              --create-namespace \
-              --values ./helm/microservices/${{ env.values_file }} \
-              --force \
-              $SET_ARGS
-          else
-            echo "Upgrading existing release (rollback-safe)"
-            helm upgrade --install node-kube-microservices ./helm/microservices \
-              --namespace ${{ env.env }} \
-              --create-namespace \
-              --values ./helm/microservices/${{ env.values_file }} \
-              $SET_ARGS
-          fi
+          helm upgrade --install node-kube-microservices ./helm/microservices \
+            --namespace ${{ env.env }} \
+            --create-namespace \
+            --values ./helm/microservices/${{ env.values_file }} \
+            $SET_ARGS
 
       # -------------------------------
       # 11. Verify rollout
